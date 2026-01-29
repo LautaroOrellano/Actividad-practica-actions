@@ -30,6 +30,8 @@ jobs:
         run: |
           pip install pytest
           pytest
+        env:
+          PYTHONPATH: .
 
       - name: SAST scan with Bandit
         run: |
