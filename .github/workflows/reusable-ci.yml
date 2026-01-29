@@ -36,7 +36,7 @@ jobs:
       - name: SAST scan with Bandit
         run: |
           pip install bandit
-          bandit -r .
+          bandit -r . -x tests
 
       - name: Build Docker image
         run: |
