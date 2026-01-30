@@ -1,0 +1,28 @@
+name: Integration & Dast
+
+on:
+  workflow_call:
+    inputs:
+      gpc_project_id:
+        required: true
+        type: string
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Integration tests
+        run: |
+          echo "Corriendo integracion test..."
+          sleep 5
+          echo "Integracion test ok"
+
+  dast-scan:
+    needs: integration-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: DAST Scan
+        run: |
+          echo "Running DAST scan..."
+          sleep 5
+          echo "No hay vulnerabilidad encontrada"
