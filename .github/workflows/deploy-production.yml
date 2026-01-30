@@ -1,0 +1,51 @@
+name: Deploy Production
+
+# Solo se puede disparar manualmente
+on:
+  workflow_dispatch:
+    inputs:
+      gcp_project_id:
+        description: "ID del proyecto GCP"
+        required: true
+        default: "mi-proyecto"
+      prod_vm_ip:
+        description: "IP de la VM de producción"
+        required: true
+        default: "0.0.0.0"
+      prod_vm_user:
+        description: "Usuario SSH"
+        required: true
+        default: "ubuntu"
+      prod_vm_key:
+        description: "Clave SSH"
+        required: true
+        default: ""
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Authenticate GCR
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCR_CREDENTIALS_JSON }}
+
+      - name: Pull Docker image and tag
+        run: |
+          docker pull gcr.io/${{ github.event.inputs.gcp_project_id }}/demo-api:staging
+          docker tag gcr.io/${{ github.event.inputs.gcp_project_id }}/demo-api:staging gcr.io/${{ github.event.inputs.gcp_project_id }}/demo-api:prod
+
+      - name: Deploy to Production VM via SSH
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ github.event.inputs.prod_vm_ip }}
+          username: ${{ github.event.inputs.prod_vm_user }}
+          key: ${{ github.event.inputs.prod_vm_key }}
+          script: |
+            docker pull gcr.io/${{ github.event.inputs.gcp_project_id }}/demo-api:prod
+            docker stop demo-api || true
+            docker rm demo-api || true
+            docker run -d -p 80:80 --name demo-api gcr.io/${{ github.event.inputs.gcp_project_id }}/demo-api:prod
